@@ -1,0 +1,178 @@
+
+pipeline
+
+{
+
+  agent any
+
+
+
+
+  tools
+
+    {
+
+     maven 'maven 3.8.4'
+
+    }
+
+
+
+  
+ stages  
+
+    {
+
+
+   
+ 
+    stage ('checkout code')
+    
+     {
+    
+     steps
+    
+     {
+
+    git branch: 'development', credentialsId: '23e7fc39-cec9-4bce-b8c1-0d7965f078d0', 
+     url: 'https://github.com/mnvenkat112/maven-web-appl.git'
+
+    }
+
+    }
+
+
+  
+    
+
+    stage ('build')
+
+     {
+ 
+    steps
+
+     {
+
+     sh "mvn clean package"
+
+     }
+
+     }
+
+
+
+
+
+    stage ('Sonarqube Report')
+
+     {
+
+    steps
+
+     {
+
+     sh "mvn clean sonar:sonar"
+  
+    }
+
+     }
+
+
+
+    
+
+    stage ('deployingappnin nexus')
+
+     {
+
+    steps
+
+     {
+
+     sh "mvn clean deploy"
+  
+   }
+
+     }
+
+
+
+
+
+    stage ('deploying appnin Tomcat')
+
+     {
+
+    steps
+
+     {
+
+     sshagent(['9073ac45-cb89-42e2-8e55-8a18af8a19db'])
+ 
+     {
+
+     sh "scp -o  StrictHostKeyChecking=no  target/maven-web-application.war  ec2-user@3.111.33.82:/opt/apache-tomcat-9.0.56/webapps/"
+
+     }
+
+ 
+     }
+
+     }
+
+
+
+
+  } // stages closing
+
+     
+    
+
+ 
+post 
+ {
+ 
+ 
+ always
+ {
+
+    emailext body: '''build over...
+
+
+  regards,
+  mnvenkat.''', subject: 'build over', to: 'mnvenkat112@gmail.com'
+
+
+  }
+
+  success
+ {
+
+    emailext body: '''build over... succes
+
+
+  regards,
+  mnvenkat.''', subject: 'build over', to: 'mnvenkat112@gmail.com'
+
+
+  }
+
+  failure
+ {
+
+    emailext body: '''build over... failure
+
+
+  regards,
+  mnvenkat.''', subject: 'build over', to: 'mnvenkat112@gmail.com'
+
+
+  }
+
+
+ }
+
+
+   
+
+} // pipeline closing
